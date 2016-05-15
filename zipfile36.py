@@ -1929,9 +1929,16 @@ class PyZipFile(ZipFile):
 
         file_py  = pathname + ".py"
         file_pyc = pathname + ".pyc"
-        pycache_opt0 = importlib.util.cache_from_source(file_py, optimization='')
-        pycache_opt1 = importlib.util.cache_from_source(file_py, optimization=1)
-        pycache_opt2 = importlib.util.cache_from_source(file_py, optimization=2)
+        if sys.version_info >= (3, 5):
+            pycache_opt0 = importlib.util.cache_from_source(file_py, optimization='')
+            pycache_opt1 = importlib.util.cache_from_source(file_py, optimization=1)
+            pycache_opt2 = importlib.util.cache_from_source(file_py, optimization=2)
+        else:
+            pycache_opt0 = importlib.util.cache_from_source(file_py,
+                                                            debug_override=True)
+            pycache_opt1 = importlib.util.cache_from_source(file_py,
+                                                            debug_override=False)
+            pycache_opt2 = None
         if self._optimize == -1:
             # legacy mode: use whatever file is present
             if (os.path.isfile(file_pyc) and
@@ -1950,7 +1957,7 @@ class PyZipFile(ZipFile):
                 # file name in the archive.
                 fname = pycache_opt1
                 arcname = file_pyc
-            elif (os.path.isfile(pycache_opt2) and
+            elif pycache_opt2 and (os.path.isfile(pycache_opt2) and
                   os.stat(pycache_opt2).st_mtime >= os.stat(file_py).st_mtime):
                 # Use the __pycache__/*.pyc file, but write it to the legacy pyc
                 # file name in the archive.
@@ -1961,7 +1968,7 @@ class PyZipFile(ZipFile):
                 if _compile(file_py):
                     if sys.flags.optimize == 0:
                         fname = pycache_opt0
-                    elif sys.flags.optimize == 1:
+                    elif (sys.flags.optimize == 1) or not pycache_opt2:
                         fname = pycache_opt1
                     else:
                         fname = pycache_opt2
@@ -1978,7 +1985,7 @@ class PyZipFile(ZipFile):
                 if self._optimize == 1:
                     fname = pycache_opt1
                 elif self._optimize == 2:
-                    fname = pycache_opt2
+                    fname = pycache_opt2 or pycache_opt1
                 else:
                     msg = "invalid value for 'optimize': {!r}".format(self._optimize)
                     raise ValueError(msg)
