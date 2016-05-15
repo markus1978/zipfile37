@@ -5,7 +5,6 @@ import importlib.util
 import posixpath
 import time
 import struct
-import zipfile
 import unittest
 
 
@@ -15,6 +14,8 @@ from random import randint, random, getrandbits
 from test.support import (TESTFN, findfile, unlink, rmtree,
                           requires_zlib, requires_bz2, requires_lzma,
                           captured_stdout, check_warnings)
+
+import zipfile36 as zipfile
 
 TESTFN2 = TESTFN + "2"
 TESTFNDIR = TESTFN + "d"
