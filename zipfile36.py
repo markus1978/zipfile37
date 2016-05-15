@@ -34,7 +34,7 @@ try:
 except ImportError:
     lzma = None
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 __all__ = ["BadZipFile", "BadZipfile", "error",
            "ZIP_STORED", "ZIP_DEFLATED", "ZIP_BZIP2", "ZIP_LZMA",

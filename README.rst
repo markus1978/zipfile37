@@ -1,7 +1,7 @@
 This is a backport of the zipfile module from Python 3.6, which contains some
 improvements.
 
-Suggested usage::
+Suggested usage:
 
 .. code:: python
 
