@@ -1,7 +1,5 @@
 """
-Read and write ZIP files.
-
-XXX references to utf-8 need further investigation.
+Read and write ZIP files - backport of the zipfile module from Python 3.6
 """
 import io
 import os
@@ -35,6 +33,8 @@ try:
     import lzma # We may need its compression method
 except ImportError:
     lzma = None
+
+__version__ = "0.1"
 
 __all__ = ["BadZipFile", "BadZipfile", "error",
            "ZIP_STORED", "ZIP_DEFLATED", "ZIP_BZIP2", "ZIP_LZMA",
