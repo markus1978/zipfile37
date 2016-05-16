@@ -8,7 +8,14 @@ build_job:
     - flit wheel
   stage: build
 
-test_job:
+test_job_py34:
+  script:
+    - py.test
+  stage: test
+
+
+test_job_py35:
+  image: python:3.5
   script:
     - py.test
   stage: test
