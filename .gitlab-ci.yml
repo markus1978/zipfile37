@@ -1,7 +1,7 @@
 image: python:3.4
 
 before_script:
-  - pip install flit py.test
+  - pip install flit pytest
 
 build_job:
   script:
