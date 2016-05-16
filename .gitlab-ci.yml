@@ -3,8 +3,12 @@ image: python:3.4
 before_script:
   - pip install flit py.test
 
-build:
-  - flit wheel
+build_job:
+  script:
+    - flit wheel
+  stage: build
 
-test:
-  - py.test
+test_job:
+  script:
+    - py.test
+  stage: test
