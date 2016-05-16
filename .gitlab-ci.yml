@@ -1,0 +1,10 @@
+image: python:3.4
+
+before_script:
+  - pip install flit py.test
+
+build:
+  - flit wheel
+
+test:
+  - py.test
