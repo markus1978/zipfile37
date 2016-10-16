@@ -1,7 +1,7 @@
 image: python:3.4
 
 before_script:
-  - pip install pytest
+  - pip install pytest wheel
 
 build_job:
   script:
