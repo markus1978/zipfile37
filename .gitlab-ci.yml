@@ -1,11 +1,11 @@
 image: python:3.4
 
 before_script:
-  - pip install flit pytest
+  - pip install pytest
 
 build_job:
   script:
-    - flit wheel
+    - pip wheel .
   stage: build
 
 test_job_py34:
