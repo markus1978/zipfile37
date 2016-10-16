@@ -89,7 +89,7 @@ __all__ = [
     "anticipate_failure", "load_package_tests", "detect_api_mismatch",
     "check__all__",
     # sys
-    "is_jython", "check_impl_detail",
+    "is_jython", "is_android", "check_impl_detail", "unix_shell",
     # network
     "HOST", "IPV6_ENABLED", "find_unused_port", "bind_port", "open_urlresource",
     # processes
@@ -102,7 +102,7 @@ __all__ = [
     "check_warnings", "check_no_resource_warning", "EnvironmentVarGuard",
     "run_with_locale", "swap_item",
     "swap_attr", "Matcher", "set_memlimit", "SuppressCrashReport", "sortdict",
-    "run_with_tz",
+    "run_with_tz", "PGO",
     ]
 
 class Error(Exception):
@@ -463,6 +463,7 @@ def _is_gui_available():
         try:
             from tkinter import Tk
             root = Tk()
+            root.withdraw()
             root.update()
             root.destroy()
         except Exception as e:
@@ -487,12 +488,12 @@ def is_resource_enabled(resource):
 
 def requires(resource, msg=None):
     """Raise ResourceDenied if the specified resource is not available."""
-    if resource == 'gui' and not _is_gui_available():
-        raise ResourceDenied(_is_gui_available.reason)
     if not is_resource_enabled(resource):
         if msg is None:
             msg = "Use of the %r resource not enabled" % resource
         raise ResourceDenied(msg)
+    if resource == 'gui' and not _is_gui_available():
+        raise ResourceDenied(_is_gui_available.reason)
 
 def _requires_unix_version(sysname, min_version):
     """Decorator raising SkipTest if the OS is `sysname` and the version is less
@@ -731,6 +732,13 @@ requires_lzma = unittest.skipUnless(lzma, 'requires lzma')
 
 is_jython = sys.platform.startswith('java')
 
+is_android = bool(sysconfig.get_config_var('ANDROID_API_LEVEL'))
+
+if sys.platform != 'win32':
+    unix_shell = '/system/bin/sh' if is_android else '/bin/sh'
+else:
+    unix_shell = None
+
 # Filename used for testing
 if os.name == 'java':
     # Jython disallows @ in module names
@@ -800,7 +808,7 @@ TESTFN_ENCODING = sys.getfilesystemencoding()
 # encoded by the filesystem encoding (in strict mode). It can be None if we
 # cannot generate such filename.
 TESTFN_UNENCODABLE = None
-if os.name in ('nt', 'ce'):
+if os.name == 'nt':
     # skip win32s (0) or Windows 9x/ME (1)
     if sys.getwindowsversion().platform >= 2:
         # Different kinds of characters from various languages to minimize the
@@ -866,6 +874,10 @@ else:
 
 # Save the initial cwd
 SAVEDCWD = os.getcwd()
+
+# Set by libregrtest/main.py so we can skip tests that are not
+# useful for PGO
+PGO = False
 
 @contextlib.contextmanager
 def temp_dir(path=None, quiet=False):
@@ -1348,7 +1360,8 @@ def transient_internet(resource_name, *, timeout=30.0, errnos=()):
              500 <= err.code <= 599) or
             (isinstance(err, urllib.error.URLError) and
                  (("ConnectionRefusedError" in err.reason) or
-                  ("TimeoutError" in err.reason))) or
+                  ("TimeoutError" in err.reason) or
+                  ("EOFError" in err.reason))) or
             n in captured_errnos):
             if not verbose:
                 sys.stderr.write(denied.args[0] + "\n")
@@ -2067,6 +2080,9 @@ def strip_python_stderr(stderr):
     stderr = re.sub(br"\[\d+ refs, \d+ blocks\]\r?\n?", b"", stderr).strip()
     return stderr
 
+requires_type_collecting = unittest.skipIf(hasattr(sys, 'getcounts'),
+                        'types are immortal if COUNT_ALLOCS is defined')
+
 def args_from_interpreter_flags():
     """Return a list of command-line arguments reproducing the current
     settings in sys.flags and sys.warnoptions."""
@@ -2183,7 +2199,7 @@ def can_xattr():
                     os.setxattr(fp.fileno(), b"user.test", b"")
                     # Kernels < 2.6.39 don't respect setxattr flags.
                     kernel_version = platform.release()
-                    m = re.match("2.6.(\d{1,2})", kernel_version)
+                    m = re.match(r"2.6.(\d{1,2})", kernel_version)
                     can = m is None or int(m.group(1)) >= 39
                 except OSError:
                     can = False
